@@ -11,6 +11,8 @@
             padding: 0;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
         }
 
         body {
@@ -39,10 +41,9 @@
             overflow: hidden;
         }
 
-        /* Заголовок */
         .brand-header {
             text-align: center;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
         }
 
         .brand-title {
@@ -61,7 +62,6 @@
             letter-spacing: 2px;
         }
 
-        /* Табло рахунку */
         .score-board {
             background: rgba(30, 41, 59, 0.9);
             border: 2px solid #38bdf8;
@@ -69,7 +69,7 @@
             border-radius: 20px;
             font-size: 1.1rem;
             font-weight: bold;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
             box-shadow: 0 4px 10px rgba(0,0,0,0.3);
             text-align: center;
         }
@@ -79,7 +79,7 @@
             font-size: 1.3rem;
         }
 
-        /* Ігрове поле Match-3 */
+        /* Ігрове поле */
         .grid-container {
             width: 360px;
             height: 360px;
@@ -91,6 +91,7 @@
             padding: 8px;
             border-radius: 16px;
             border: 2px solid rgba(56, 189, 248, 0.3);
+            touch-action: none;
         }
 
         /* Баночки */
@@ -102,47 +103,48 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            cursor: pointer;
-            transition: transform 0.15s, box-shadow 0.15s;
+            cursor: grab;
+            transition: transform 0.15s, opacity 0.2s;
             position: relative;
             border: 1px solid rgba(255, 255, 255, 0.4);
             box-shadow: inset 0 2px 4px rgba(255,255,255,0.3), 0 3px 6px rgba(0,0,0,0.4);
         }
 
-        .can-cell:hover {
-            transform: scale(1.05);
+        .can-cell:active {
+            cursor: grabbing;
         }
 
         .can-cell.selected {
             transform: scale(1.1);
             border: 2px solid #ffffff;
-            box-shadow: 0 0 15px #fef08a, inset 0 2px 4px rgba(255,255,255,0.5);
+            box-shadow: 0 0 15px #fef08a;
             z-index: 5;
         }
 
-        /* Дизайн баночок за смаками */
+        /* Смаки Underwood зі скріншотів */
+        .can-yachcha { background: linear-gradient(180deg, #facc15 0%, #dc2626 100%); color: #ffffff; }
         .can-currant { background: linear-gradient(180deg, #fbcfe8 0%, #ec4899 100%); color: #831843; }
-        .can-cola { background: linear-gradient(180deg, #334155 0%, #0f172a 100%); color: #f8fafc; border-color: #f59e0b; }
+        .can-cola { background: linear-gradient(180deg, #475569 0%, #0f172a 100%); color: #f8fafc; border-color: #f59e0b; }
         .can-mango { background: linear-gradient(180deg, #fef08a 0%, #f59e0b 100%); color: #78350f; }
-        .can-bergamot { background: linear-gradient(180deg, #a7f3d0 0%, #10b981 100%); color: #064e3b; }
-        .can-rose { background: linear-gradient(180deg, #fecdd3 0%, #f43f5e 100%); color: #881337; }
+        .can-vibe { background: linear-gradient(180deg, #ffffff 0%, #e11d48 100%); color: #881337; }
 
         .can-icon {
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             line-height: 1;
             margin-bottom: 2px;
+            pointer-events: none;
         }
 
         .can-text {
-            font-size: 0.42rem;
+            font-size: 0.4rem;
             font-weight: 900;
             text-transform: uppercase;
-            letter-spacing: 0.3px;
+            letter-spacing: 0.2px;
             text-align: center;
-            line-height: 1.1;
+            line-height: 1;
+            pointer-events: none;
         }
 
-        /* Підказка */
         .hint {
             margin-top: 15px;
             font-size: 0.8rem;
@@ -150,7 +152,7 @@
             text-align: center;
         }
 
-        /* Екран Перемоги */
+        /* Екран перемоги */
         .win-overlay {
             display: none;
             position: absolute;
@@ -215,9 +217,8 @@
 
         <div class="grid-container" id="grid"></div>
 
-        <div class="hint">Міняй сусідні баночки місцями, щоб зібрати 3+ в ряд!</div>
+        <div class="hint">Свайпай курсором/пальцем або клікай на сусідні баночки!</div>
 
-        <!-- Екран перемоги -->
         <div class="win-overlay" id="winOverlay">
             <h2>ПЕРЕМОГА! 🎉🍹</h2>
             <p>Ти набрав 100 балів та ідеально зібрав лимонадний мікс! Час освіжитися справжнім набором:</p>
@@ -232,12 +233,13 @@
         const scoreEl = document.getElementById('score');
         const winOverlay = document.getElementById('winOverlay');
 
+        // Точний асортимент зі скріншотів
         const TYPES = [
-            { id: 0, class: 'can-currant', icon: '🫐', label: 'CURRANT' },
-            { id: 1, class: 'can-cola', icon: '🍊', label: 'ORANGE COLA' },
-            { id: 2, class: 'can-mango', icon: '🥭', label: 'MANGO' },
-            { id: 3, class: 'can-bergamot', icon: '🌺', label: 'BERGAMOT' },
-            { id: 4, class: 'can-rose', icon: '🌹', label: 'ROSE' }
+            { id: 0, class: 'can-yachcha', icon: '🍒', label: 'ЯЧЧА' },
+            { id: 1, class: 'can-currant', icon: '🫐', label: 'CURRANT' },
+            { id: 2, class: 'can-cola', icon: '🍊', label: 'ORANGE COLA' },
+            { id: 3, class: 'can-mango', icon: '🥭', label: 'MANGO' },
+            { id: 4, class: 'can-vibe', icon: '🌺', label: '+VIBE' }
         ];
 
         let board = [];
@@ -245,11 +247,9 @@
         let selectedCell = null;
         let isProcessing = false;
 
-        // Ініціалізація дошки без початкових трійок
+        // Початкова ініціалізація дошки
         function initBoard() {
-            gridEl.innerHTML = '';
             board = [];
-
             for (let r = 0; r < GRID_SIZE; r++) {
                 board[r] = [];
                 for (let c = 0; c < GRID_SIZE; c++) {
@@ -266,7 +266,6 @@
             renderBoard();
         }
 
-        // Відображення дошки
         function renderBoard() {
             gridEl.innerHTML = '';
             for (let r = 0; r < GRID_SIZE; r++) {
@@ -275,26 +274,79 @@
                     const item = TYPES[typeIdx];
 
                     const cell = document.createElement('div');
-                    cell.className = `can-cell ${item.class}`;
+                    cell.className = `can-cell ${item ? item.class : ''}`;
                     cell.dataset.row = r;
                     cell.dataset.col = c;
 
-                    cell.innerHTML = `
-                        <div class="can-icon">${item.icon}</div>
-                        <div class="can-text">${item.label}</div>
-                    `;
+                    if (item) {
+                        cell.innerHTML = `
+                            <div class="can-icon">${item.icon}</div>
+                            <div class="can-text">${item.label}</div>
+                        `;
+                    }
 
                     if (selectedCell && selectedCell.r === r && selectedCell.c === c) {
                         cell.classList.add('selected');
                     }
 
-                    cell.addEventListener('click', () => handleCellClick(r, c));
+                    // Обробники подій для мишки та тачу
+                    addDragAndTouchListeners(cell, r, c);
+
                     gridEl.appendChild(cell);
                 }
             }
         }
 
-        // Клік по комірці
+        // Обробка Drag, Touch-свайпів та Кліків
+        let startX = 0, startY = 0;
+
+        function addDragAndTouchListeners(cell, r, c) {
+            // Клік
+            cell.addEventListener('click', () => handleCellClick(r, c));
+
+            // Мишка (Drag)
+            cell.addEventListener('mousedown', (e) => {
+                startX = e.clientX;
+                startY = e.clientY;
+            });
+
+            cell.addEventListener('mouseup', (e) => {
+                const diffX = e.clientX - startX;
+                const diffY = e.clientY - startY;
+                handleSwipe(r, c, diffX, diffY);
+            });
+
+            // Смартфон (Touch)
+            cell.addEventListener('touchstart', (e) => {
+                startX = e.touches[0].clientX;
+                startY = e.touches[0].clientY;
+            }, { passive: true });
+
+            cell.addEventListener('touchend', (e) => {
+                const diffX = e.changedTouches[0].clientX - startX;
+                const diffY = e.changedTouches[0].clientY - startY;
+                handleSwipe(r, c, diffX, diffY);
+            }, { passive: true });
+        }
+
+        function handleSwipe(r, c, diffX, diffY) {
+            const threshold = 20; // Мінімальна відстань для свайпу
+            if (Math.abs(diffX) < threshold && Math.abs(diffY) < threshold) return;
+
+            let targetR = r;
+            let targetC = c;
+
+            if (Math.abs(diffX) > Math.abs(diffY)) {
+                targetC = diffX > 0 ? c + 1 : c - 1;
+            } else {
+                targetR = diffY > 0 ? r + 1 : r - 1;
+            }
+
+            if (targetR >= 0 && targetR < GRID_SIZE && targetC >= 0 && targetC < GRID_SIZE) {
+                trySwap(r, c, targetR, targetC);
+            }
+        }
+
         async function handleCellClick(r, c) {
             if (isProcessing || score >= TARGET_SCORE) return;
 
@@ -307,28 +359,31 @@
                 const isAdjacent = (Math.abs(r1 - r) + Math.abs(c1 - c)) === 1;
 
                 if (isAdjacent) {
-                    isProcessing = true;
-                    // Обмін
-                    swap(r1, c1, r, c);
-                    renderBoard();
-
-                    const matches = checkMatches();
-                    if (matches.length > 0) {
-                        selectedCell = null;
-                        await processMatches();
-                    } else {
-                        // Якщо немає збігів — повертаємо назад
-                        setTimeout(() => {
-                            swap(r1, c1, r, c);
-                            selectedCell = null;
-                            renderBoard();
-                            isProcessing = false;
-                        }, 250);
-                    }
+                    await trySwap(r1, c1, r, c);
                 } else {
                     selectedCell = { r, c };
                     renderBoard();
                 }
+            }
+        }
+
+        async function trySwap(r1, c1, r2, c2) {
+            if (isProcessing || score >= TARGET_SCORE) return;
+            isProcessing = true;
+
+            swap(r1, c1, r2, c2);
+            selectedCell = null;
+            renderBoard();
+
+            const matches = checkMatches();
+            if (matches.length > 0) {
+                await processMatches();
+            } else {
+                // Повертаємо назад якщо збігу немає
+                await new Promise(res => setTimeout(res, 200));
+                swap(r1, c1, r2, c2);
+                renderBoard();
+                isProcessing = false;
             }
         }
 
@@ -338,11 +393,11 @@
             board[r2][c2] = temp;
         }
 
-        // Перевірка збігів (3 і більше в ряд)
+        // Пошук збігів 3+ в ряд
         function checkMatches() {
             let matched = new Set();
 
-            // Горизонтальні збіги
+            // Горизонталь
             for (let r = 0; r < GRID_SIZE; r++) {
                 for (let c = 0; c < GRID_SIZE - 2; c++) {
                     let type = board[r][c];
@@ -354,7 +409,7 @@
                 }
             }
 
-            // Вертикальні збіги
+            // Вертикаль
             for (let c = 0; c < GRID_SIZE; c++) {
                 for (let r = 0; r < GRID_SIZE - 2; r++) {
                     let type = board[r][c];
@@ -372,29 +427,28 @@
             });
         }
 
-        // Обробка видалення та падіння нових баночок
+        // Очищення та зсув елементів
         async function processMatches() {
             let matches = checkMatches();
 
             while (matches.length > 0) {
-                // Нарахування балів (10 балів за кожну баночку)
-                score += matches.length * 10;
+                score += matches.length * 5;
+                if (score > TARGET_SCORE) score = TARGET_SCORE;
                 scoreEl.innerText = score;
 
                 if (score >= TARGET_SCORE) {
-                    scoreEl.innerText = TARGET_SCORE;
                     winOverlay.style.display = 'flex';
                     break;
                 }
 
-                // Очищення збігів
+                // Видаляємо збіги
                 matches.forEach(({ r, c }) => {
                     board[r][c] = null;
                 });
                 renderBoard();
-                await new Promise(res => setTimeout(res, 200));
+                await new Promise(res => setTimeout(res, 180));
 
-                // Падіння баночок
+                // Зсув вниз
                 for (let c = 0; c < GRID_SIZE; c++) {
                     for (let r = GRID_SIZE - 1; r >= 0; r--) {
                         if (board[r][c] === null) {
@@ -409,7 +463,7 @@
                     }
                 }
 
-                // Заповнення порожніх місць зверху
+                // Генерація нових баночок зверху
                 for (let r = 0; r < GRID_SIZE; r++) {
                     for (let c = 0; c < GRID_SIZE; c++) {
                         if (board[r][c] === null) {
@@ -419,7 +473,7 @@
                 }
 
                 renderBoard();
-                await new Promise(res => setTimeout(res, 250));
+                await new Promise(res => setTimeout(res, 220));
 
                 matches = checkMatches();
             }
